@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lords Mobile</title>
+    
+    <!-- React & ReactDOM -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    
+    <!-- Babel for JSX -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Tailwind Configuration -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        slate: {
+                            850: '#172033', // Custom dark shade
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['ui-sans-serif', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Helvetica Neue', 'Arial', 'sans-serif'],
+                        mono: ['ui-monospace', 'SFMono-Regular', 'Menlo', 'Monaco', 'Consolas', 'Liberation Mono', 'Courier New', 'monospace'],
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* Custom scrollbar for webkit */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0f172a; 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #334155; 
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #475569; 
+        }
+        body {
+            background-color: #0f172a;
+            color: #e2e8f0;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        // --- ICONS (Inline SVG components to avoid dependencies) ---
+        const Icon = ({ children, className, size = 24, ...props }) => (
+            <svg 
+                xmlns="http://www.w3.org/2000/svg" 
+                width={size} 
+                height={size} 
+                viewBox="0 0 24 24" 
+                fill="none" 
+                stroke="currentColor" 
+                strokeWidth="2" 
+                strokeLinecap="round" 
+                strokeLinejoin="round" 
+                className={className} 
+                {...props}
+            >
+                {children}
+            </svg>
+        );
+
+        const Settings = (props) => <Icon {...props}><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.47a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.39a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></Icon>;
+        const RefreshCw = (props) => <Icon {...props}><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></Icon>;
+        const Search = (props) => <Icon {...props}><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></Icon>;
+        const Calculator = (props) => <Icon {...props}><rect width="16" height="20" x="4" y="2" rx="2"/><line x1="8" x2="16" y1="6" y2="6"/><line x1="16" x2="16" y1="14" y2="18"/><path d="M16 10h.01"/><path d="M12 10h.01"/><path d="M8 10h.01"/><path d="M12 14h.01"/><path d="M8 14h.01"/><path d="M12 18h.01"/><path d="M8 18h.01"/></Icon>;
+        const Copy = (props) => <Icon {...props}><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></Icon>;
+        const Check = (props) => <Icon {...props}><polyline points="20 6 9 17 4 12"/></Icon>;
+        const Terminal = (props) => <Icon {...props}><polyline points="4 17 10 11 4 5"/><line x1="12" x2="20" y1="19" y2="19"/></Icon>;
+        const Shield = (props) => <Icon {...props}><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></Icon>;
+        const Users = (props) => <Icon {...props}><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></Icon>;
+        const ChevronDown = (props) => <Icon {...props}><path d="m6 9 6 6 6-6"/></Icon>;
+        const ChevronUp = (props) => <Icon {...props}><path d="m18 15-6-6-6 6"/></Icon>;
+
+        // --- DATA MODEL: COMPS ---
+        const FILL_OPTIONS = [150000, 200000, 300000];
+
+        const CONFIG_PRESETS = {
+            '80/20': { id: '80/20', t5Percent: 0.80, t4Percent: 0.20, label: '80/20' },
+            '90/10': { id: '90/10', t5Percent: 0.90, t4Percent: 0.10, label: '90/10' },
+            '100/0': { id: '100/0', t5Percent: 1, t4Percent: 0, label: '100/0' }
+          
+        };
+
+        const DEFAULT_INPUT = `569
+7 11 2
+2-0-8`;
+
+        // --- DATA MODEL: COMMANDS ---
+        const BOT_DATA = {
+            "user_commands": [
+                { "command": "bal", "description": "Report of how much resource you sent to the Bank" },
+                { "command": "recall all", "description": "Calls all gathering troops back to the castle" },
+                { "command": "food 5m", "description": "The bank sends food until pre-defined limit" },
+                { "command": "stone 5m", "description": "The bank sends stone until pre-defined limit" },
+                { "command": "wood 5m", "description": "The bank sends wood until pre-defined limit" },
+                { "command": "ore 5m", "description": "The bank sends ore until pre-defined limit" },
+                { "command": "gold 5m", "description": "The bank sends gold until pre-defined limit" },
+                { "command": "rss 10m 10m 10m 10m 10m", "description": "The bank sends 10m of each resource (RSS)" },
+                { "command": "pos chat", "description": "Informs the exact location of the bank" },
+                { "command": "buildspam 20 3", "description": "Ask for guild help in construction each 3 seconds" },
+                { "command": "donatefood [player] 30m", "description": "Sends food to a specific player from your balance" },
+                { "command": "transfer [player] food 30m", "description": "Transfers player's food balance to another" }
+            ],
+            "admin_commands": [
+                { "command": "adminbal", "description": "Check total balance of bank" },
+                { "command": "adminbal [player]", "description": "Check balance of a specific player" },
+                { "command": "adminbag", "description": "Check bag RSS amount" },
+                { "command": "abort all", "description": "Cancel all tasks in the queue" },
+                { "command": "setgather [on|off]", "description": "Put bank to gather or not" },
+                { "command": "shield", "description": "Check shield remaining time" },
+                { "command": "shield deploy", "description": "Put shield on the bank" },
+                { "command": "relocate [x] [y]", "description": "Relocate bank to a specific position on the map" },
+                { "command": "relocatekvk [k]", "description": "Relocate bank to a KvK selected kingdom" },
+                { "command": "migrate [k][x][y]", "description": "Migrate bank to a position in a new kingdom" },
+                { "command": "adminrss [x] [x] [x] [x] [x] [player]", "description": "Send RSS from bank balance to a player" },
+                { "command": "adminfood [player] [x]", "description": "Send food from bank balance to a player" },
+                { "command": "stop [time]", "description": "Put bank offline for [time] seconds" },
+                { "command": "quest", "description": "Check Guild Fest (FG) tasks" },
+                { "command": "whitelist [player] [Rank]", "description": "Accepts a player into the guild and sets the rank" },
+                { "command": "blacklist [player]", "description": "Reject a player from joining the guild" },
+                { "command": "unlistwhite [player]", "description": "Remove player from the accepted list" },
+                { "command": "unlistblack [player]", "description": "Remove player from the rejected list" },
+                { "command": "findtile [type][level]", "description": "Check tiles around the bank" },
+                { "command": "findtilelocal [type][level]", "description": "Check tiles around the castle that sent the command" },
+                { "command": "setbal [player] [type] [amount]", "description": "Manually set RSS balance for an account" },
+                { "command": "setrsslimit [type] [amount]", "description": "Sets a threshold for RSS that the bank will not go below" },
+                { "command": "members", "description": "Update bank members list" }
+            ]
+        };
+
+        // --- HELPER FUNCTIONS ---
+        const formatNumber = (num) => {
+            if (num === 0) return '0';
+            return `${(num / 1000).toFixed(0)}k`;
+        };
+
+        const parseComps = (inputText) => {
+            return inputText.split('\n').filter(line => line.trim() !== '').map((line, index) => {
+                const cleanLine = line.trim();
+                let numbers = [];
+                const spaceSplit = cleanLine.split(/[/\s.-]+/).filter(n => !isNaN(parseFloat(n)));
+                
+                if (spaceSplit.length === 3) {
+                    numbers = spaceSplit.map(Number);
+                } else if (cleanLine.length === 3 && !isNaN(cleanLine)) {
+                    numbers = cleanLine.split('').map(Number);
+                } else {
+                    return null;
+                }
+
+                const [inf, rng, cav] = numbers;
+                const totalParts = inf + rng + cav;
+                if (totalParts === 0) return null;
+
+                return {
+                    id: `custom-${index}`,
+                    name: cleanLine.toUpperCase(),
+                    ratios: { inf: inf / totalParts, rng: rng / totalParts, cav: cav / totalParts }
+                };
+            }).filter(comp => comp !== null);
+        };
+
+        // --- COMPONENT: COMPS TAB ---
+        const CompBlock = ({ comp, config, totalFill }) => {
+            const t5Total = totalFill * config.t5Percent;
+            const t4Total = totalFill * config.t4Percent;
+
+            const t5 = { inf: t5Total * comp.ratios.inf, rng: t5Total * comp.ratios.rng, cav: t5Total * comp.ratios.cav };
+            const t4 = { inf: t4Total * comp.ratios.inf, rng: t4Total * comp.ratios.rng, cav: t4Total * comp.ratios.cav };
+
+            return (
+                <div className="border border-slate-600 rounded-lg bg-[#1e293b] overflow-hidden mb-4 last:mb-0 shadow-sm transition-all duration-300">
+                    <div className="bg-[#0f172a] px-4 py-2 border-b border-slate-600 flex justify-between items-center">
+                        <h3 className="text-white font-bold text-lg">{comp.name}</h3>
+                    </div>
+                    <div className="p-4 bg-[#1e293b]">
+                        <div className="grid grid-cols-4 gap-4 mb-2 text-xs font-bold uppercase tracking-wider text-right">
+                            <div className="col-span-1"></div>
+                            <div className="text-red-400">Infantry</div>
+                            <div className="text-green-400">Range</div>
+                            <div className="text-blue-400">Cavalry</div>
+                        </div>
+                        <div className="grid grid-cols-4 gap-4 py-2 border-b border-slate-700/50 items-center">
+                            <div className="font-bold text-yellow-500 text-sm">T5 ({(config.t5Percent * 100).toFixed(0)}%)</div>
+                            <div className={`font-mono text-right text-sm ${t5.inf > 0 ? 'text-red-400' : 'text-slate-600'}`}>{formatNumber(t5.inf)}</div>
+                            <div className={`font-mono text-right text-sm ${t5.rng > 0 ? 'text-green-400' : 'text-slate-600'}`}>{formatNumber(t5.rng)}</div>
+                            <div className={`font-mono text-right text-sm ${t5.cav > 0 ? 'text-blue-400' : 'text-slate-600'}`}>{formatNumber(t5.cav)}</div>
+                        </div>
+                        <div className="grid grid-cols-4 gap-4 py-2 items-center">
+                            <div className="font-bold text-yellow-500 text-sm">T4 ({(config.t4Percent * 100).toFixed(0)}%)</div>
+                            <div className={`font-mono text-right text-sm ${t4.inf > 0 ? 'text-red-400' : 'text-slate-600'}`}>{formatNumber(t4.inf)}</div>
+                            <div className={`font-mono text-right text-sm ${t4.rng > 0 ? 'text-green-400' : 'text-slate-600'}`}>{formatNumber(t4.rng)}</div>
+                            <div className={`font-mono text-right text-sm ${t4.cav > 0 ? 'text-blue-400' : 'text-slate-600'}`}>{formatNumber(t4.cav)}</div>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        const CompsTab = () => {
+            const [activePreset, setActivePreset] = useState('80/20');
+            const [fillTotal, setFillTotal] = useState(200000);
+            const [inputText, setInputText] = useState(DEFAULT_INPUT);
+            const [comps, setComps] = useState([]);
+            const [showSettings, setShowSettings] = useState(false);
+
+            useEffect(() => {
+                setComps(parseComps(inputText));
+            }, [inputText]);
+
+            const currentConfig = CONFIG_PRESETS[activePreset];
+
+            return (
+                <div className="bg-[#1e293b] rounded-xl border border-slate-600 shadow-2xl overflow-hidden">
+                    <div className="bg-[#1e293b] p-4 sm:p-6 border-b border-slate-600">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                            <h1 className="text-2xl font-bold text-indigo-400">Comps</h1>
+                            <div className="flex flex-wrap items-center gap-3">
+                                <div className="flex bg-[#0f172a] p-1 rounded-lg border border-slate-700">
+                                    {FILL_OPTIONS.map((amount) => (
+                                        <button
+                                            key={amount}
+                                            onClick={() => setFillTotal(amount)}
+                                            className={`px-3 py-1.5 rounded-md text-sm font-bold transition-all ${fillTotal === amount ? 'bg-indigo-500 text-white shadow' : 'text-slate-400 hover:text-slate-200'}`}
+                                        >
+                                            {formatNumber(amount)}
+                                        </button>
+                                    ))}
+                                </div>
+                                <div className="flex bg-[#0f172a] p-1 rounded-lg border border-slate-700">
+                                    {Object.values(CONFIG_PRESETS).map((preset) => (
+                                        <button
+                                            key={preset.id}
+                                            onClick={() => setActivePreset(preset.id)}
+                                            className={`px-3 py-1.5 rounded-md text-sm font-bold transition-all ${activePreset === preset.id ? 'bg-emerald-600 text-white shadow' : 'text-slate-400 hover:text-slate-200'}`}
+                                        >
+                                            {preset.label}
+                                        </button>
+                                    ))}
+                                </div>
+                                <button 
+                                    onClick={() => setShowSettings(!showSettings)}
+                                    className={`p-2 rounded-lg transition-colors ${showSettings ? 'bg-indigo-600 text-white' : 'bg-slate-700 text-slate-300 hover:bg-slate-600'}`}
+                                    title="Edit Comps"
+                                >
+                                    <Settings size={20} />
+                                </button>
+                            </div>
+                        </div>
+                        {showSettings && (
+                            <div className="mt-4 animate-in fade-in slide-in-from-top-2">
+                                <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Edit Comps (Format: "Inf Rng Cav" or "965")</label>
+                                <textarea
+                                    value={inputText}
+                                    onChange={(e) => setInputText(e.target.value)}
+                                    className="w-full h-32 bg-[#0f172a] border border-slate-700 rounded-lg p-3 text-slate-300 font-mono text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                                />
+                                <div className="flex justify-end mt-2">
+                                    <button onClick={() => setInputText(DEFAULT_INPUT)} className="text-xs text-slate-500 hover:text-indigo-400 flex items-center gap-1">
+                                        <RefreshCw size={12} /> Reset Defaults
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                    <div className="p-4 bg-[#0f172a] space-y-4">
+                        {comps.length === 0 ? <div className="text-center py-8 text-slate-500">No valid compositions found.</div> : comps.map((comp) => <CompBlock key={comp.id} comp={comp} config={currentConfig} totalFill={fillTotal} />)}
+                    </div>
+                </div>
+            );
+        };
+
+        // --- COMPONENT: ASSISTANT TAB ---
+        const AssistantTab = () => {
+            const [searchTerm, setSearchTerm] = useState('');
+            const [rssInputs, setRssInputs] = useState({ food: '', stone: '', wood: '', ore: '', gold: '' });
+            const [generatedCommand, setGeneratedCommand] = useState('');
+            const [copied, setCopied] = useState(false);
+            const [expandedRows, setExpandedRows] = useState({});
+
+            const allCommands = [
+                ...BOT_DATA.user_commands.map(c => ({ ...c, type: 'user' })),
+                ...BOT_DATA.admin_commands.map(c => ({ ...c, type: 'admin' }))
+            ];
+
+            const filteredCommands = allCommands.filter(item => 
+                item.command.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                item.description.toLowerCase().includes(searchTerm.toLowerCase())
+            );
+
+            const toggleRow = (index) => {
+                setExpandedRows(prev => ({
+                    ...prev,
+                    [index]: !prev[index]
+                }));
+            };
+
+            const handleRssChange = (type, value) => {
+                const re = /^[0-9\b]+$/;
+                if (value === '' || re.test(value)) {
+                    setRssInputs(prev => ({ ...prev, [type]: value }));
+                }
+            };
+
+            const generateRssCommand = () => {
+                const fmt = (val) => val && parseInt(val) > 0 ? `${val}m` : '0';
+                const cmd = `rss ${fmt(rssInputs.food)} ${fmt(rssInputs.stone)} ${fmt(rssInputs.wood)} ${fmt(rssInputs.ore)} ${fmt(rssInputs.gold)}`;
+                setGeneratedCommand(cmd);
+                setCopied(false);
+            };
+
+            const copyToClipboard = () => {
+                navigator.clipboard.writeText(generatedCommand);
+                setCopied(true);
+                setTimeout(() => setCopied(false), 2000);
+            };
+
+            return (
+                <div className="bg-[#1e293b] rounded-xl border border-slate-600 shadow-2xl overflow-hidden flex flex-col h-full">
+                    <div className="bg-[#1e293b] p-6 border-b border-slate-600">
+                        <h1 className="text-2xl font-bold text-indigo-400 mb-1">Command List</h1>
+                        <p className="text-slate-400 text-sm flex items-center gap-2">
+                            <Terminal size={14} /> Please verify the specific prefix (e.g., "!", "#", "1") required by your bot before executing.
+                        </p>
+                    </div>
+
+                    <div className="p-6 bg-[#0f172a] border-b border-slate-700">
+                        <div className="flex items-center gap-2 mb-4">
+                            <Calculator className="text-indigo-400" size={20} />
+                            <h2 className="text-slate-200 font-bold">RSS Generator</h2>
+                        </div>
+                        
+                        <div className="grid grid-cols-5 gap-2 mb-4">
+                            {['Food', 'Stone', 'Wood', 'Ore', 'Gold'].map(res => (
+                                <div key={res} className="flex flex-col">
+                                    <label className="text-[10px] uppercase font-bold text-slate-500 mb-1">{res}</label>
+                                    <div className="relative">
+                                        <input 
+                                            type="text" 
+                                            placeholder="0"
+                                            value={rssInputs[res.toLowerCase()]}
+                                            onChange={(e) => handleRssChange(res.toLowerCase(), e.target.value)}
+                                            className="w-full bg-[#1e293b] border border-slate-600 rounded p-2 text-right text-sm text-white focus:border-indigo-500 focus:outline-none"
+                                        />
+                                        <span className="absolute right-8 top-2 text-slate-500 text-xs hidden sm:block">m</span>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+
+                        <div className="flex flex-col sm:flex-row gap-4 items-end sm:items-center">
+                            <button 
+                                onClick={generateRssCommand}
+                                className="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2 px-6 rounded transition-colors"
+                            >
+                                Generate
+                            </button>
+                            
+                            <div className="flex-1 w-full relative">
+                                <input 
+                                    readOnly
+                                    value={generatedCommand}
+                                    placeholder="Output: rss 0 0 0 0 0"
+                                    className="w-full bg-[#020617] border border-slate-700 rounded p-2 text-indigo-300 font-mono text-sm"
+                                />
+                                {generatedCommand && (
+                                    <button 
+                                        onClick={copyToClipboard}
+                                        className="absolute right-2 top-2 text-slate-400 hover:text-white"
+                                        title="Copy"
+                                    >
+                                        {copied ? <Check size={16} className="text-green-500"/> : <Copy size={16}/>}
+                                    </button>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="p-4 bg-[#1e293b] border-b border-slate-700 sticky top-0 z-10">
+                        <div className="relative">
+                            <Search className="absolute left-3 top-3 text-slate-500" size={18} />
+                            <input 
+                                type="text" 
+                                placeholder="Search command or description..." 
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                className="w-full bg-[#0f172a] border border-slate-600 rounded-lg pl-10 pr-4 py-2.5 text-slate-200 focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none"
+                            />
+                        </div>
+                    </div>
+
+                    <div className="flex-1 overflow-auto bg-[#0f172a] p-4">
+                        <div className="border border-slate-700 rounded-lg overflow-hidden">
+                            <table className="w-full text-left text-sm text-slate-400">
+                                <thead className="bg-[#1e293b] text-slate-200 uppercase text-xs font-bold">
+                                    <tr>
+                                        <th className="px-4 py-3">Command</th>
+                                        <th className="px-4 py-3 w-24 text-right">Type</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-slate-700">
+                                    {filteredCommands.length > 0 ? filteredCommands.map((item, idx) => (
+                                        <React.Fragment key={idx}>
+                                            <tr 
+                                                onClick={() => toggleRow(idx)}
+                                                className="hover:bg-slate-800/50 transition-colors cursor-pointer group"
+                                            >
+                                                <td className="px-4 py-3 font-mono text-indigo-400 font-medium whitespace-nowrap flex items-center gap-2">
+                                                    {expandedRows[idx] ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                                                    {item.command}
+                                                </td>
+                                                <td className="px-4 py-3 text-right">
+                                                    <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium uppercase ${
+                                                        item.type === 'admin' 
+                                                        ? 'bg-red-500/10 text-red-400 border border-red-500/20' 
+                                                        : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                                                    }`}>
+                                                        {item.type === 'admin' ? <Shield size={10} className="mr-1"/> : <Users size={10} className="mr-1"/>}
+                                                        {item.type}
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                            {expandedRows[idx] && (
+                                                <tr className="bg-[#1e293b]/50">
+                                                    <td colSpan="2" className="px-4 py-3 text-slate-300 text-xs border-l-2 border-indigo-500/50 pl-8">
+                                                        <div className="flex flex-col gap-1">
+                                                            <span className="text-[10px] uppercase font-bold text-slate-500">Description</span>
+                                                            {item.description}
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            )}
+                                        </React.Fragment>
+                                    )) : (
+                                        <tr>
+                                            <td colSpan="2" className="px-4 py-8 text-center text-slate-500">
+                                                No commands found matching "{searchTerm}"
+                                            </td>
+                                        </tr>
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        // --- MAIN APP COMPONENT ---
+        const App = () => {
+            const [activeTab, setActiveTab] = useState('comps');
+
+            return (
+                <div className="min-h-screen bg-[#0f172a] text-slate-200 font-sans p-4 md:p-8 flex justify-center">
+                    <div className="w-full max-w-4xl flex flex-col gap-4">
+                        <div className="flex space-x-2 bg-[#1e293b] p-1 rounded-lg w-fit border border-slate-600 self-center md:self-start">
+                            <button
+                                onClick={() => setActiveTab('comps')}
+                                className={`px-6 py-2 rounded-md text-sm font-bold transition-all ${
+                                    activeTab === 'comps' 
+                                    ? 'bg-indigo-600 text-white shadow' 
+                                    : 'text-slate-400 hover:text-slate-200 hover:bg-slate-700'
+                                }`}
+                            >
+                                Comps
+                            </button>
+                            <button
+                                onClick={() => setActiveTab('assistant')}
+                                className={`px-6 py-2 rounded-md text-sm font-bold transition-all ${
+                                    activeTab === 'assistant' 
+                                    ? 'bg-indigo-600 text-white shadow' 
+                                    : 'text-slate-400 hover:text-slate-200 hover:bg-slate-700'
+                                }`}
+                            >
+                                Assistant
+                            </button>
+                        </div>
+                        <div className="transition-all duration-300">
+                            {activeTab === 'comps' ? <CompsTab /> : <AssistantTab />}
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
