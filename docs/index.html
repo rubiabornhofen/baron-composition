@@ -81,7 +81,7 @@
             </svg>
         );
 
-        const Settings = (props) => <Icon {...props}><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.47a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.39a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></Icon>;
+        const Edit = (props) => <Icon {...props}><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></Icon>;
         const RefreshCw = (props) => <Icon {...props}><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></Icon>;
         const Search = (props) => <Icon {...props}><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></Icon>;
         const Calculator = (props) => <Icon {...props}><rect width="16" height="20" x="4" y="2" rx="2"/><line x1="8" x2="16" y1="6" y2="6"/><line x1="16" x2="16" y1="14" y2="18"/><path d="M16 10h.01"/><path d="M12 10h.01"/><path d="M8 10h.01"/><path d="M12 14h.01"/><path d="M8 14h.01"/><path d="M12 18h.01"/><path d="M8 18h.01"/></Icon>;
@@ -225,7 +225,7 @@
         };
 
         const CompsTab = () => {
-            const [activePreset, setActivePreset] = useState('90/10');
+            const [activePreset, setActivePreset] = useState('80/20');
             const [fillTotal, setFillTotal] = useState(200000);
             const [inputText, setInputText] = useState(DEFAULT_INPUT);
             const [comps, setComps] = useState([]);
@@ -243,6 +243,7 @@
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                             <h1 className="text-2xl font-bold text-indigo-400">Comps</h1>
                             <div className="flex flex-wrap items-center gap-3">
+                                {/* Fill Options Toggle */}
                                 <div className="flex bg-[#0f172a] p-1 rounded-lg border border-slate-700">
                                     {FILL_OPTIONS.map((amount) => (
                                         <button
@@ -250,10 +251,11 @@
                                             onClick={() => setFillTotal(amount)}
                                             className={`px-3 py-1.5 rounded-md text-sm font-bold transition-all ${fillTotal === amount ? 'bg-indigo-500 text-white shadow' : 'text-slate-400 hover:text-slate-200'}`}
                                         >
-                                            {formatNumberComp(amount)}
+                                            {formatNumber(amount)}
                                         </button>
                                     ))}
                                 </div>
+                                {/* Preset Toggle */}
                                 <div className="flex bg-[#0f172a] p-1 rounded-lg border border-slate-700">
                                     {Object.values(CONFIG_PRESETS).map((preset) => (
                                         <button
@@ -265,13 +267,22 @@
                                         </button>
                                     ))}
                                 </div>
-                                <button 
-                                    onClick={() => setShowSettings(!showSettings)}
-                                    className={`p-2 rounded-lg transition-colors ${showSettings ? 'bg-indigo-600 text-white' : 'bg-slate-700 text-slate-300 hover:bg-slate-600'}`}
-                                    title="Edit Comps"
-                                >
-                                    <Settings size={20} />
-                                </button>
+                                
+                                {/* Edit Button - Wrapped to match Toggles height */}
+                                <div className="flex bg-[#0f172a] p-1 rounded-lg border border-slate-700">
+                                    <button 
+                                        onClick={() => setShowSettings(!showSettings)}
+                                        className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-bold transition-all ${
+                                            showSettings 
+                                            ? 'bg-indigo-600 text-white shadow' 
+                                            : 'text-slate-400 hover:text-slate-200'
+                                        }`}
+                                        title="Edit Comps"
+                                    >
+                                        <Edit size={14} />
+                                        <span>Edit comps</span>
+                                    </button>
+                                </div>
                             </div>
                         </div>
                         {showSettings && (
