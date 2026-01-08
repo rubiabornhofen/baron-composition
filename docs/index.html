@@ -153,6 +153,11 @@
         // --- HELPER FUNCTIONS ---
         const formatNumber = (num) => {
             if (num === 0) return '0';
+            return `${(num / 1000).toFixed(2)}k`;
+        };
+
+        const formatNumberComp = (num) => {
+            if (num === 0) return '0';
             return `${(num / 1000).toFixed(0)}k`;
         };
 
@@ -203,13 +208,13 @@
                             <div className="text-blue-400">Cavalry</div>
                         </div>
                         <div className="grid grid-cols-4 gap-4 py-2 border-b border-slate-700/50 items-center">
-                            <div className="font-bold text-yellow-500 text-sm">T5 ({(config.t5Percent * 100).toFixed(0)}%)</div>
+                            <div className="font-bold text-yellow-500 text-sm">T5</div>
                             <div className={`font-mono text-right text-sm ${t5.inf > 0 ? 'text-red-400' : 'text-slate-600'}`}>{formatNumber(t5.inf)}</div>
                             <div className={`font-mono text-right text-sm ${t5.rng > 0 ? 'text-green-400' : 'text-slate-600'}`}>{formatNumber(t5.rng)}</div>
                             <div className={`font-mono text-right text-sm ${t5.cav > 0 ? 'text-blue-400' : 'text-slate-600'}`}>{formatNumber(t5.cav)}</div>
                         </div>
                         <div className="grid grid-cols-4 gap-4 py-2 items-center">
-                            <div className="font-bold text-yellow-500 text-sm">T4 ({(config.t4Percent * 100).toFixed(0)}%)</div>
+                            <div className="font-bold text-yellow-500 text-sm">T4</div>
                             <div className={`font-mono text-right text-sm ${t4.inf > 0 ? 'text-red-400' : 'text-slate-600'}`}>{formatNumber(t4.inf)}</div>
                             <div className={`font-mono text-right text-sm ${t4.rng > 0 ? 'text-green-400' : 'text-slate-600'}`}>{formatNumber(t4.rng)}</div>
                             <div className={`font-mono text-right text-sm ${t4.cav > 0 ? 'text-blue-400' : 'text-slate-600'}`}>{formatNumber(t4.cav)}</div>
@@ -220,7 +225,7 @@
         };
 
         const CompsTab = () => {
-            const [activePreset, setActivePreset] = useState('80/20');
+            const [activePreset, setActivePreset] = useState('90/10');
             const [fillTotal, setFillTotal] = useState(200000);
             const [inputText, setInputText] = useState(DEFAULT_INPUT);
             const [comps, setComps] = useState([]);
@@ -245,7 +250,7 @@
                                             onClick={() => setFillTotal(amount)}
                                             className={`px-3 py-1.5 rounded-md text-sm font-bold transition-all ${fillTotal === amount ? 'bg-indigo-500 text-white shadow' : 'text-slate-400 hover:text-slate-200'}`}
                                         >
-                                            {formatNumber(amount)}
+                                            {formatNumberComp(amount)}
                                         </button>
                                     ))}
                                 </div>
