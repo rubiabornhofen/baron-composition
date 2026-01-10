@@ -94,9 +94,10 @@
         const ChevronUp = (props) => <Icon {...props}><path d="m18 15-6-6-6 6"/></Icon>;
 
         // --- DATA MODEL: COMPS ---
-        const FILL_OPTIONS = [150000, 200000, 300000];
+        const FILL_OPTIONS = [75000, 100000, 150000, 200000, 300000];
 
         const CONFIG_PRESETS = {
+            '60/40': { id: '60/40', t5Percent: 0.60, t4Percent: 0.40, label: '60/40' },
             '80/20': { id: '80/20', t5Percent: 0.80, t4Percent: 0.20, label: '80/20' },
             '90/10': { id: '90/10', t5Percent: 0.90, t4Percent: 0.10, label: '90/10' },
             '100/0': { id: '100/0', t5Percent: 1, t4Percent: 0, label: '100/0' }
