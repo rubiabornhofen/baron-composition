@@ -190,16 +190,33 @@
 
         // --- COMPONENT: COMPS TAB ---
         const CompBlock = ({ comp, config, totalFill }) => {
+            const [copied, setCopied] = useState(false);
+            
             const t5Total = totalFill * config.t5Percent;
             const t4Total = totalFill * config.t4Percent;
 
             const t5 = { inf: t5Total * comp.ratios.inf, rng: t5Total * comp.ratios.rng, cav: t5Total * comp.ratios.cav };
             const t4 = { inf: t4Total * comp.ratios.inf, rng: t4Total * comp.ratios.rng, cav: t4Total * comp.ratios.cav };
 
+            const handleCopy = () => {
+                const text = `${comp.name} (${totalFill}) Inf: ${t5.inf} | ${t4.inf} - Rng: ${t5.rng} | ${t4.rng} - Cav: ${t5.cav} | ${t4.cav}`;
+                
+                navigator.clipboard.writeText(text);
+                setCopied(true);
+                setTimeout(() => setCopied(false), 2000);
+            };
+
             return (
                 <div className="border border-slate-600 rounded-lg bg-[#1e293b] overflow-hidden mb-4 last:mb-0 shadow-sm transition-all duration-300">
                     <div className="bg-[#0f172a] px-4 py-2 border-b border-slate-600 flex justify-between items-center">
                         <h3 className="text-white font-bold text-lg">{comp.name}</h3>
+                        <button 
+                            onClick={handleCopy}
+                            className="p-1.5 rounded-md hover:bg-slate-700 text-slate-400 hover:text-white transition-colors"
+                            title="Copy Composition"
+                        >
+                            {copied ? <Check size={18} className="text-green-500" /> : <Copy size={18} />}
+                        </button>
                     </div>
                     <div className="p-4 bg-[#1e293b]">
                         <div className="grid grid-cols-4 gap-4 mb-2 text-xs font-bold uppercase tracking-wider text-right">
