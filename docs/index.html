@@ -219,7 +219,7 @@
                         <h3 className="text-white font-bold text-lg">{comp.name}</h3>
                         <button 
                             onClick={handleCopy}
-                            className="p-1.5 rounded-md hover:bg-slate-700 text-slate-400 hover:text-white transition-colors"
+                            className="p-1.5 rounded-md hover:bg-slate-700 text-slate-400 hover:text-white transition-colors hide-on-screenshot"
                             title="Copy Composition"
                         >
                             {copied ? <Check size={18} className="text-green-500" /> : <Copy size={18} />}
@@ -274,7 +274,8 @@
                     const canvas = await html2canvas(compsListRef.current, {
                         backgroundColor: '#0f172a',
                         scale: 2, // Retina quality
-                        logging: false
+                        logging: false,
+                        ignoreElements: (element) => element.classList.contains('hide-on-screenshot')
                     });
 
                     canvas.toBlob(async (blob) => {
