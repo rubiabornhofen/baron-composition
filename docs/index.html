@@ -199,7 +199,10 @@
             const t4 = { inf: t4Total * comp.ratios.inf, rng: t4Total * comp.ratios.rng, cav: t4Total * comp.ratios.cav };
 
             const handleCopy = () => {
-                const text = `${comp.name} (${totalFill}) Inf: ${t5.inf} | ${t4.inf} - Rng: ${t5.rng} | ${t4.rng} - Cav: ${t5.cav} | ${t4.cav}`;
+                const text = `${comp.name} (${formatNumberComp(totalFill)}) 
+                                Inf: ${formatNumber(t5.inf)} | ${formatNumber(t4.inf)} - 
+                                Rng: ${formatNumber(t5.rng)} | ${formatNumber(t4.rng)} - 
+                                Cav: ${formatNumber(t5.cav)} | ${formatNumber(t4.cav)}`;
                 
                 navigator.clipboard.writeText(text);
                 setCopied(true);
