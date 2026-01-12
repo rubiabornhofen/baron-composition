@@ -14,6 +14,9 @@
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- html2canvas for Screenshots -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     
     <!-- Tailwind Configuration -->
     <script>
@@ -92,6 +95,7 @@
         const Users = (props) => <Icon {...props}><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></Icon>;
         const ChevronDown = (props) => <Icon {...props}><path d="m6 9 6 6 6-6"/></Icon>;
         const ChevronUp = (props) => <Icon {...props}><path d="m18 15-6-6-6 6"/></Icon>;
+        const Camera = (props) => <Icon {...props}><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></Icon>;
 
         // --- DATA MODEL: COMPS ---
         const FILL_OPTIONS = [75000, 100000, 150000, 200000, 300000];
@@ -251,6 +255,10 @@
             const [inputText, setInputText] = useState(DEFAULT_INPUT);
             const [comps, setComps] = useState([]);
             const [showSettings, setShowSettings] = useState(false);
+            const [isSnapping, setIsSnapping] = useState(false);
+            
+            // Reference to the container of the cards
+            const compsListRef = useRef(null);
 
             useEffect(() => {
                 setComps(parseComps(inputText));
@@ -258,11 +266,59 @@
 
             const currentConfig = CONFIG_PRESETS[activePreset];
 
+            const handleScreenshot = async () => {
+                if (!compsListRef.current) return;
+                setIsSnapping(true);
+                
+                try {
+                    const canvas = await html2canvas(compsListRef.current, {
+                        backgroundColor: '#0f172a',
+                        scale: 2, // Retina quality
+                        logging: false
+                    });
+
+                    canvas.toBlob(async (blob) => {
+                        if (!blob) return;
+                        try {
+                            await navigator.clipboard.write([
+                                new ClipboardItem({ 'image/png': blob })
+                            ]);
+                            setIsSnapping('done'); // Visual feedback state
+                            setTimeout(() => setIsSnapping(false), 2000);
+                        } catch (err) {
+                            console.error('Clipboard write failed:', err);
+                            alert("Clipboard permission denied or not supported.");
+                            setIsSnapping(false);
+                        }
+                    });
+                } catch (error) {
+                    console.error('Screenshot failed:', error);
+                    setIsSnapping(false);
+                }
+            };
+
             return (
                 <div className="bg-[#1e293b] rounded-xl border border-slate-600 shadow-2xl overflow-hidden">
                     <div className="bg-[#1e293b] p-4 sm:p-6 border-b border-slate-600">
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                            <h1 className="text-2xl font-bold text-indigo-400">Comps</h1>
+                            <div className="flex items-center gap-3">
+                                <h1 className="text-2xl font-bold text-indigo-400">Comps</h1>
+                                <button
+                                    onClick={handleScreenshot}
+                                    className={`p-1.5 rounded-md transition-colors ${
+                                        isSnapping === 'done' 
+                                            ? 'text-green-400 bg-green-400/10' 
+                                            : isSnapping 
+                                                ? 'text-indigo-400 animate-pulse' 
+                                                : 'text-slate-400 hover:text-white hover:bg-slate-700'
+                                    }`}
+                                    title="Screenshot to Clipboard"
+                                    disabled={!!isSnapping}
+                                >
+                                    {isSnapping === 'done' ? <Check size={20}/> : <Camera size={20}/>}
+                                </button>
+                            </div>
+                            
                             <div className="flex flex-wrap items-center gap-3">
                                 {/* Fill Options Toggle */}
                                 <div className="flex bg-[#0f172a] p-1 rounded-lg border border-slate-700">
@@ -322,7 +378,7 @@
                             </div>
                         )}
                     </div>
-                    <div className="p-4 bg-[#0f172a] space-y-4">
+                    <div ref={compsListRef} className="p-4 bg-[#0f172a] space-y-4">
                         {comps.length === 0 ? <div className="text-center py-8 text-slate-500">No valid compositions found.</div> : comps.map((comp) => <CompBlock key={comp.id} comp={comp} config={currentConfig} totalFill={fillTotal} />)}
                     </div>
                 </div>
