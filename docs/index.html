@@ -276,18 +276,52 @@
                     });
 
                     canvas.toBlob(async (blob) => {
-                        if (!blob) return;
-                        try {
-                            await navigator.clipboard.write([
-                                new ClipboardItem({ 'image/png': blob })
-                            ]);
-                            setIsSnapping('done'); // Visual feedback state
-                            setTimeout(() => setIsSnapping(false), 2000);
-                        } catch (err) {
-                            console.error('Clipboard write failed:', err);
-                            alert("Clipboard permission denied or not supported.");
+                        if (!blob) {
                             setIsSnapping(false);
+                            return;
                         }
+
+                        // Create file for Web Share API
+                        const file = new File([blob], "lords-mobile-comps.png", { type: "image/png" });
+
+                        // Mobile Native Share (WhatsApp/Discord/etc)
+                        // Avoid clipboard restrictions on mobile
+                        if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+                            try {
+                                await navigator.share({
+                                    files: [file],
+                                    title: 'Lords Mobile Comps',
+                                    text: 'Troop compositions list.'
+                                });
+                                setIsSnapping('done');
+                            } catch (shareError) {
+                                if (shareError.name !== 'AbortError') {
+                                     console.error('Share failed, trying fallback:', shareError);
+                                }
+                                setIsSnapping(false);
+                                return;
+                            }
+                        } 
+                        // Desktop
+                        else {
+                            try {
+                                await navigator.clipboard.write([
+                                    new ClipboardItem({ 'image/png': blob })
+                                ]);
+                                setIsSnapping('done'); 
+                            } catch (err) {
+                                console.error('Clipboard write failed:', err);
+                                // Fallback (Force Download)
+                                // Used when permissions are totally denied
+                                const link = document.createElement('a');
+                                link.href = canvas.toDataURL("image/png");
+                                link.download = 'lords-mobile-comps.png';
+                                link.click();
+                                setIsSnapping('done');
+                            }
+                        }
+                        
+                        setTimeout(() => setIsSnapping(false), 2000);
                     });
                 } catch (error) {
                     console.error('Screenshot failed:', error);
