@@ -44,7 +44,6 @@
         ::-webkit-scrollbar-thumb:hover { background: #475569; }
         body { background-color: #0f172a; color: #e2e8f0; }
         
-        /* Utilitário para esconder a barra de rolagem horizontal mantendo o scroll funcional no mobile */
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
@@ -229,7 +228,6 @@
             { id: 'colo', name: { en: 'Colosseum', pt: 'Coliseu', es: 'Coliseo' }, mana: '50', note: { en: 'Per Week', pt: 'Por Semana', es: 'Por Semana' } }
         ];
 
-        // --- GF TASKS DATA (Bilingual Extracted from Image) ---
         const GF_TASKS_200 = [
             { id: 1, mission: { pt: "Acerte Monstros", en: "Hit Monsters" }, qty: "120", time: "24:00:00", pts: "280" },
             { id: 2, mission: { pt: "Acerte Monstros", en: "Hit Monsters" }, qty: "210", time: "2D 00:00:00", pts: "336" },
@@ -357,6 +355,58 @@
         ];
 
         // --- HELPER FUNCTIONS ---
+        const isMobileDevice = () => /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+
+        const exportScreenshot = (canvas, filename, title, text, setIsSnapping) => {
+            canvas.toBlob(async (blob) => {
+                if (!blob) { setIsSnapping(false); return; }
+
+                const tryCopy = async () => {
+                    try {
+                        await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+                        return true;
+                    } catch (e) {
+                        return false;
+                    }
+                };
+
+                const forceDownload = () => {
+                    const link = document.createElement('a');
+                    link.href = canvas.toDataURL("image/png");
+                    link.download = filename;
+                    link.click();
+                };
+
+                if (isMobileDevice() && navigator.share && navigator.canShare) {
+                    const file = new File([blob], filename, { type: "image/png" });
+                    if (navigator.canShare({ files: [file] })) {
+                        try {
+                            await navigator.share({ files: [file], title, text });
+                            setIsSnapping('done');
+                            setTimeout(() => setIsSnapping(false), 2000);
+                            return;
+                        } catch (e) {
+                            if (e.name !== 'AbortError') {
+                                const copied = await tryCopy();
+                                if (!copied) forceDownload();
+                            }
+                            setIsSnapping(false);
+                            return;
+                        }
+                    }
+                }
+
+                const copied = await tryCopy();
+                if (copied) {
+                    setIsSnapping('done');
+                } else {
+                    forceDownload();
+                    setIsSnapping('done');
+                }
+                setTimeout(() => setIsSnapping(false), 2000);
+            });
+        };
+
         const formatNumber = (num) => {
             if (num === 0) return '0';
             const k = num / 1000;
@@ -465,32 +515,12 @@
                         logging: false,
                         ignoreElements: (element) => element.classList.contains('hide-on-screenshot')
                     });
-                    canvas.toBlob(async (blob) => {
-                        if (!blob) { setIsSnapping(false); return; }
-                        const file = new File([blob], "lords-comps.png", { type: "image/png" });
-                        if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
-                            try {
-                                await navigator.share({ files: [file], title: 'Lords Mobile Comps', text: 'Here are the current troop compositions.' });
-                                setIsSnapping('done');
-                            } catch (e) { setIsSnapping(false); return; }
-                        } else {
-                            try {
-                                await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
-                                setIsSnapping('done'); 
-                            } catch (err) {
-                                const link = document.createElement('a');
-                                link.href = canvas.toDataURL("image/png");
-                                link.download = 'lords-comps.png';
-                                link.click();
-                                setIsSnapping('done');
-                            }
-                        }
-                        setTimeout(() => setIsSnapping(false), 2000);
-                    });
+                    
+                    exportScreenshot(canvas, "lords-comps.png", "Lords Mobile Comps", "Here are the current troop compositions.", setIsSnapping);
                 } catch (error) { setIsSnapping(false); }
             };
 
-            const ActionIcon = (navigator.share && navigator.canShare) ? Share2 : Camera;
+            const ActionIcon = (isMobileDevice() && navigator.share && navigator.canShare) ? Share2 : Copy;
 
             return (
                 <div className="bg-[#1e293b] rounded-xl border border-slate-600 shadow-2xl overflow-hidden">
@@ -501,7 +531,7 @@
                                 <button
                                     onClick={handleScreenshot}
                                     className={`p-1.5 rounded-md transition-colors ${isSnapping === 'done' ? 'text-green-400 bg-green-400/10' : isSnapping ? 'text-indigo-400 animate-pulse' : 'text-slate-400 hover:text-white hover:bg-slate-700'}`}
-                                    title="Share/Screenshot"
+                                    title="Share/Copy/Download Screenshot"
                                     disabled={!!isSnapping}
                                 >
                                     {isSnapping === 'done' ? <Check size={20}/> : <ActionIcon size={20}/>}
@@ -546,6 +576,8 @@
                 </div>
             );
         };
+
+        // --- COMPONENTS: ASSISTANT SUB-VIEWS ---
 
         const BaseTitlesView = () => (
             <div className="p-4 bg-[#0f172a] flex-1 overflow-auto">
@@ -795,21 +827,29 @@
                             <table className="w-full text-left text-sm text-slate-300 whitespace-nowrap">
                                 <thead className={`uppercase text-[10px] sm:text-xs font-bold ${mode === '200' ? 'bg-fuchsia-900/30 text-fuchsia-400' : 'bg-emerald-900/30 text-emerald-400'}`}>
                                     <tr>
-                                        <th className="px-4 py-3 border-b border-slate-700 w-12 text-center">ID</th>
-                                        <th className="px-4 py-3 border-b border-slate-700">{lang === 'en' ? 'Quest' : 'Missão'}</th>
-                                        <th className="px-4 py-3 border-b border-slate-700 text-right">{lang === 'en' ? 'Qty' : 'Qtde'}</th>
-                                        <th className="px-4 py-3 border-b border-slate-700 text-right">{lang === 'en' ? 'Time' : 'Tempo'}</th>
-                                        <th className="px-4 py-3 border-b border-slate-700 text-right font-extrabold">{lang === 'en' ? 'Pts' : 'Ptos'}</th>
+                                        <th className="px-3 sm:px-4 py-3 border-b border-slate-700 w-8 sm:w-12 text-center">ID</th>
+                                        <th className="px-3 sm:px-4 py-3 border-b border-slate-700">{lang === 'en' ? 'Quest' : 'Missão'}</th>
+                                        <th className="hidden sm:table-cell px-4 py-3 border-b border-slate-700 text-right">{lang === 'en' ? 'Qty' : 'Qtde'}</th>
+                                        <th className="hidden sm:table-cell px-4 py-3 border-b border-slate-700 text-right">{lang === 'en' ? 'Time' : 'Tempo'}</th>
+                                        <th className="hidden sm:table-cell px-4 py-3 border-b border-slate-700 text-right font-extrabold">{lang === 'en' ? 'Pts' : 'Ptos'}</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-slate-700/50">
                                     {filteredTasks.length > 0 ? filteredTasks.map((task) => (
                                         <tr key={task.id} className="hover:bg-slate-800/30 transition-colors">
-                                            <td className="px-4 py-2.5 text-center text-slate-500 font-mono text-xs">{task.id}</td>
-                                            <td className="px-4 py-2.5 font-medium text-slate-200 whitespace-normal min-w-[200px]">{task.mission[lang]}</td>
-                                            <td className="px-4 py-2.5 text-right text-indigo-300 font-mono">{task.qty}</td>
-                                            <td className="px-4 py-2.5 text-right text-slate-400 text-xs">{task.time}</td>
-                                            <td className="px-4 py-2.5 text-right text-amber-400 font-bold font-mono">{task.pts}</td>
+                                            <td className="px-3 sm:px-4 py-2.5 text-center text-slate-500 font-mono text-[10px] sm:text-xs">{task.id}</td>
+                                            <td className="px-3 sm:px-4 py-2.5">
+                                                <div className="font-medium text-slate-200 whitespace-normal text-xs sm:text-sm">{task.mission[lang]}</div>
+                                                
+                                                <div className="flex sm:hidden flex-wrap items-center gap-x-3 gap-y-1 mt-1 text-[10px] text-slate-400 font-mono">
+                                                    <span className="flex items-center gap-1"><span className="uppercase font-bold text-slate-500">{lang === 'en' ? 'Qty' : 'Qtde'}:</span> <span className="text-indigo-300">{task.qty}</span></span>
+                                                    <span className="flex items-center gap-1"><span className="uppercase font-bold text-slate-500">{lang === 'en' ? 'Time' : 'Tempo'}:</span> <span>{task.time}</span></span>
+                                                    <span className="flex items-center gap-1"><span className="uppercase font-bold text-slate-500">{lang === 'en' ? 'Pts' : 'Ptos'}:</span> <span className="text-amber-400 font-bold">{task.pts}</span></span>
+                                                </div>
+                                            </td>
+                                            <td className="hidden sm:table-cell px-4 py-2.5 text-right text-indigo-300 font-mono">{task.qty}</td>
+                                            <td className="hidden sm:table-cell px-4 py-2.5 text-right text-slate-400 text-xs">{task.time}</td>
+                                            <td className="hidden sm:table-cell px-4 py-2.5 text-right text-amber-400 font-bold font-mono">{task.pts}</td>
                                         </tr>
                                     )) : (
                                         <tr><td colSpan="5" className="px-4 py-8 text-center text-slate-500">
@@ -825,40 +865,45 @@
         };
 
         // --- MANA TOOL VIEWS ---
-        const ManaTableView = ({ lvl, lang }) => {
-            // Computed array mapped directly to language preference
+        const ManaTableView = ({ lvl, lang, captureRef }) => {
             const tableData = useMemo(() => {
-                return MANA_BUILDINGS.map(bldg => {
-                    const lIdx = lvl - 1;
-                    const reqKey = bldg.prereqs[lIdx];
-                    return {
-                        name: bldg.names[lang],
-                        cost: bldg.costs[lIdx],
-                        prereq: PREREQ_MAP[reqKey][lang],
-                        manasteel: lvl === 6 ? bldg.manasteel : '0'
-                    }
-                });
+                const excludedKeys = ['Infantry', 'Range', 'Cavalry'];
+                return MANA_BUILDINGS
+                    .filter(bldg => !excludedKeys.includes(bldg.names.en))
+                    .map(bldg => {
+                        const lIdx = lvl - 1;
+                        const reqKey = bldg.prereqs[lIdx];
+                        return {
+                            name: bldg.names[lang],
+                            cost: bldg.costs[lIdx],
+                            prereq: PREREQ_MAP[reqKey][lang],
+                            manasteel: lvl === 6 ? bldg.manasteel : '0'
+                        }
+                    });
             }, [lvl, lang]);
 
             return (
-                <div className="p-4">
-                    <div className="border border-slate-700 rounded-lg overflow-hidden">
+                <div className="p-4 sm:p-6 w-full">
+                    <div ref={captureRef} className="border border-slate-700 rounded-lg overflow-hidden bg-[#1e293b]">
                         <table className="w-full text-left text-sm text-slate-300">
-                            <thead className="bg-[#1e293b] text-slate-400 uppercase text-[10px] sm:text-xs font-bold tracking-wider">
+                            <thead className="bg-[#0f172a] text-slate-400 uppercase text-[10px] sm:text-xs font-bold tracking-wider">
                                 <tr>
-                                    <th className="px-4 py-3 border-b border-slate-700">Building</th>
-                                    <th className="px-4 py-3 border-b border-slate-700 text-right">Cost</th>
-                                    <th className="px-4 py-3 border-b border-slate-700">Prereq</th>
-                                    <th className="px-4 py-3 border-b border-slate-700 text-right">Manasteel</th>
+                                    <th className="px-3 sm:px-4 py-3 border-b border-slate-700">Building</th>
+                                    <th className="px-3 sm:px-4 py-3 border-b border-slate-700 text-right">Cost</th>
+                                    <th className="hidden sm:table-cell px-4 py-3 border-b border-slate-700">Prereq</th>
+                                    <th className="px-3 sm:px-4 py-3 border-b border-slate-700 text-right">Manasteel</th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-slate-700/50">
+                            <tbody className="divide-y divide-slate-700/50 bg-[#1e293b]">
                                 {tableData.map((row, idx) => (
                                     <tr key={idx} className="hover:bg-slate-800/30 transition-colors">
-                                        <td className="px-4 py-2.5 font-medium whitespace-nowrap text-indigo-300">{row.name}</td>
-                                        <td className="px-4 py-2.5 font-mono text-right">{row.cost}</td>
-                                        <td className="px-4 py-2.5 text-xs text-slate-400">{row.prereq}</td>
-                                        <td className="px-4 py-2.5 font-mono text-right text-blue-400">{row.manasteel}</td>
+                                        <td className="px-3 sm:px-4 py-2.5">
+                                            <div className="font-medium whitespace-normal text-indigo-300 text-xs sm:text-sm">{row.name}</div>
+                                            <div className="block sm:hidden text-[10px] text-slate-500 mt-0.5 whitespace-normal">Req: {row.prereq}</div>
+                                        </td>
+                                        <td className="px-3 sm:px-4 py-2.5 font-mono text-right text-xs sm:text-sm">{row.cost}</td>
+                                        <td className="hidden sm:table-cell px-4 py-2.5 text-xs text-slate-400">{row.prereq}</td>
+                                        <td className="px-3 sm:px-4 py-2.5 font-mono text-right text-blue-400 text-xs sm:text-sm">{row.manasteel}</td>
                                     </tr>
                                 ))}
                             </tbody>
@@ -868,7 +913,7 @@
             )
         };
 
-        const ManaTroopsView = ({ lvl, lang }) => {
+        const ManaTroopsView = ({ lvl, lang, captureRef }) => {
             const troopData = useMemo(() => {
                 const troopKeys = ['Infantry', 'Range', 'Cavalry'];
                 return MANA_BUILDINGS
@@ -894,8 +939,8 @@
             };
 
             return (
-                <div className="p-4 sm:p-6">
-                    <div className="max-w-xl mx-auto space-y-3">
+                <div className="p-4 sm:p-6 w-full">
+                    <div ref={captureRef} className="max-w-xl mx-auto space-y-3 bg-[#0f172a] p-2 rounded-xl">
                         {troopData.map((troop, idx) => (
                             <div key={idx} className={`p-4 sm:p-5 rounded-xl border flex items-center justify-between transition-colors ${getColors(troop.type)}`}>
                                 <span className="font-bold text-lg">{troop.name}</span>
@@ -916,9 +961,9 @@
             );
         };
 
-        const ManaStoreView = () => (
-            <div className="p-4 sm:p-6">
-                <div className="max-w-2xl mx-auto">
+        const ManaStoreView = ({ captureRef }) => (
+            <div className="p-4 sm:p-6 w-full">
+                <div ref={captureRef} className="max-w-2xl mx-auto bg-[#0f172a] p-2 rounded-xl">
                     <div className="flex items-center gap-2 mb-6">
                         <ShoppingCart className="text-indigo-400" size={24} />
                         <h2 className="text-xl font-bold text-slate-200">Mana Packages</h2>
@@ -949,9 +994,9 @@
             </div>
         );
 
-        const ManaEventsView = ({ lang }) => (
-             <div className="p-4 sm:p-6">
-                <div className="max-w-xl mx-auto space-y-3">
+        const ManaEventsView = ({ lang, captureRef }) => (
+             <div className="p-4 sm:p-6 w-full">
+                <div ref={captureRef} className="max-w-xl mx-auto space-y-3 bg-[#0f172a] p-2 rounded-xl">
                     <div className="flex items-center gap-2 mb-6">
                         <Calendar className="text-blue-400" size={24} />
                         <h2 className="text-xl font-bold text-slate-200">Mana Events</h2>
@@ -978,48 +1023,28 @@
             const [lang, setLang] = useState('en');
             const [isSnapping, setIsSnapping] = useState(false);
             
-            const manaContentRef = useRef(null);
+            const captureRef = useRef(null);
 
             const cycleLang = () => {
                 setLang(prev => prev === 'en' ? 'pt' : prev === 'pt' ? 'es' : 'en');
             };
 
             const handleScreenshot = async () => {
-                if (!manaContentRef.current) return;
+                if (!captureRef.current) return;
                 setIsSnapping(true);
                 try {
-                    const canvas = await html2canvas(manaContentRef.current, {
+                    const canvas = await html2canvas(captureRef.current, {
                         backgroundColor: '#0f172a',
                         scale: 2,
                         logging: false,
                         ignoreElements: (element) => element.classList.contains('hide-on-screenshot')
                     });
-                    canvas.toBlob(async (blob) => {
-                        if (!blob) { setIsSnapping(false); return; }
-                        const file = new File([blob], `lords-mana-${activeView}.png`, { type: "image/png" });
-                        if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
-                            try {
-                                await navigator.share({ files: [file], title: `Lords Mana - ${activeView}`, text: `Mana details for ${activeView}.` });
-                                setIsSnapping('done');
-                            } catch (e) { setIsSnapping(false); return; }
-                        } else {
-                            try {
-                                await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
-                                setIsSnapping('done'); 
-                            } catch (err) {
-                                const link = document.createElement('a');
-                                link.href = canvas.toDataURL("image/png");
-                                link.download = `lords-mana-${activeView}.png`;
-                                link.click();
-                                setIsSnapping('done');
-                            }
-                        }
-                        setTimeout(() => setIsSnapping(false), 2000);
-                    });
+                    
+                    exportScreenshot(canvas, `lords-mana-${activeView}.png`, `Lords Mana - ${activeView}`, `Mana details for ${activeView}.`, setIsSnapping);
                 } catch (error) { setIsSnapping(false); }
             };
 
-            const ActionIcon = (navigator.share && navigator.canShare) ? Share2 : Camera;
+            const ActionIcon = (isMobileDevice() && navigator.share && navigator.canShare) ? Share2 : Copy;
 
             return (
                 <div className="flex flex-col flex-1 overflow-hidden">
@@ -1049,7 +1074,7 @@
                             <button
                                 onClick={handleScreenshot}
                                 className={`flex items-center justify-center gap-2 bg-[#0f172a] border border-slate-600 text-slate-200 py-2 px-3 rounded-lg transition-colors shrink-0 ${isSnapping === 'done' ? 'border-green-500 text-green-400' : isSnapping ? 'border-indigo-500 text-indigo-400 animate-pulse' : 'hover:border-slate-500'}`}
-                                title="Share View"
+                                title="Share / Copy View"
                                 disabled={!!isSnapping}
                             >
                                 {isSnapping === 'done' ? <Check size={16} className="text-green-500"/> : <ActionIcon size={16} className={isSnapping ? "text-indigo-400" : "text-slate-400"} />}
@@ -1073,19 +1098,18 @@
 
                     </div>
 
-                    <div ref={manaContentRef} className="flex-1 overflow-y-auto bg-[#0f172a]">
-                        {activeView === 'table' && <ManaTableView lvl={selectedLvl} lang={lang} />}
-                        {activeView === 'troops' && <ManaTroopsView lvl={selectedLvl} lang={lang} />}
-                        {activeView === 'store' && <ManaStoreView />}
-                        {activeView === 'events' && <ManaEventsView lang={lang} />}
+                    <div className="flex-1 overflow-y-auto bg-[#0f172a]">
+                        {activeView === 'table' && <ManaTableView lvl={selectedLvl} lang={lang} captureRef={captureRef} />}
+                        {activeView === 'troops' && <ManaTroopsView lvl={selectedLvl} lang={lang} captureRef={captureRef} />}
+                        {activeView === 'store' && <ManaStoreView captureRef={captureRef} />}
+                        {activeView === 'events' && <ManaEventsView lang={lang} captureRef={captureRef} />}
                     </div>
                 </div>
             );
         }
 
-
         const AssistantTab = () => {
-            const [activeSubTab, setActiveSubTab] = useState('titles');
+            const [activeSubTab, setActiveSubTab] = useState('titles'); // titles, gftasks, mana, rss, commands
 
             return (
                 <div className="bg-[#1e293b] rounded-xl border border-slate-600 shadow-2xl overflow-hidden flex flex-col h-[700px]">
@@ -1114,6 +1138,7 @@
                         </div>
                     </div>
 
+                    {/* Renderização Condicional Limpa */}
                     {activeSubTab === 'titles' && <BaseTitlesView />}
                     {activeSubTab === 'gftasks' && <GfTasksView />}
                     {activeSubTab === 'mana' && <ManaAppContainer />}
