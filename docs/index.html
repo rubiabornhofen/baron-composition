@@ -515,7 +515,7 @@
                         logging: false,
                         ignoreElements: (element) => element.classList.contains('hide-on-screenshot')
                     });
-                    
+
                     exportScreenshot(canvas, "lords-comps.png", "Lords Mobile Comps", "Here are the current troop compositions.", setIsSnapping);
                 } catch (error) { setIsSnapping(false); }
             };
@@ -578,6 +578,7 @@
         };
 
         // --- COMPONENTS: ASSISTANT SUB-VIEWS ---
+
         const BaseTitlesView = () => (
             <div className="p-4 bg-[#0f172a] flex-1 overflow-auto">
                 <div className="border border-slate-700 rounded-lg overflow-hidden">
@@ -632,7 +633,7 @@
                     <div className="max-w-xl">
                         <div className="flex items-center gap-2 mb-6">
                             <Calculator className="text-indigo-400" size={20} />
-                            <h2 className="text-slate-200 font-bold">Resource Command Generator</h2>
+                            <h2 className="text-slate-200 font-bold">RSS Resource Generator</h2>
                         </div>
                         
                         <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-6">
@@ -758,7 +759,7 @@
         };
 
         const GfTasksView = () => {
-            const [mode, setMode] = useState('200'); // '200' | '120'
+            const [mode, setMode] = useState('200');
             const [searchTerm, setSearchTerm] = useState('');
             const [lang, setLang] = useState('en');
 
@@ -1108,15 +1109,12 @@
         }
 
         const AssistantTab = () => {
-            const [activeSubTab, setActiveSubTab] = useState('titles'); // titles, gftasks, mana, rss, commands
+            const [activeSubTab, setActiveSubTab] = useState('titles');
 
             return (
                 <div className="bg-[#1e293b] rounded-xl border border-slate-600 shadow-2xl overflow-hidden flex flex-col h-[700px]">
                     <div className="bg-[#1e293b] pt-6 px-6 border-b border-slate-700 shrink-0">
                         <h1 className="text-2xl font-bold text-indigo-400 mb-2">Assistant Tool</h1>
-                        <p className="text-slate-400 text-xs sm:text-sm flex items-center gap-2 mb-6">
-                            <Terminal size={14} /> Verify the specific prefix (e.g., "!", "#", "1") required by your bot.
-                        </p>
                         
                         <div className="flex space-x-4 sm:space-x-6 overflow-x-auto no-scrollbar scroll-smooth snap-x">
                             <button onClick={() => setActiveSubTab('titles')} className={`pb-3 text-sm font-bold flex items-center gap-2 transition-colors border-b-2 whitespace-nowrap snap-start shrink-0 ${activeSubTab === 'titles' ? 'border-indigo-500 text-indigo-400' : 'border-transparent text-slate-500 hover:text-slate-300'}`}>
@@ -1125,24 +1123,26 @@
                             <button onClick={() => setActiveSubTab('gftasks')} className={`pb-3 text-sm font-bold flex items-center gap-2 transition-colors border-b-2 whitespace-nowrap snap-start shrink-0 ${activeSubTab === 'gftasks' ? 'border-indigo-500 text-indigo-400' : 'border-transparent text-slate-500 hover:text-slate-300'}`}>
                                 <Target size={16}/> GF Tasks
                             </button>
-                            <button onClick={() => setActiveSubTab('mana')} className={`pb-3 text-sm font-bold flex items-center gap-2 transition-colors border-b-2 whitespace-nowrap snap-start shrink-0 ${activeSubTab === 'mana' ? 'border-indigo-500 text-indigo-400' : 'border-transparent text-slate-500 hover:text-slate-300'}`}>
+                            <button onClick={() => setActiveSubTab('mana')} className={`pb-3 pr-4 sm:pr-0 text-sm font-bold flex items-center gap-2 transition-colors border-b-2 whitespace-nowrap snap-start shrink-0 ${activeSubTab === 'mana' ? 'border-indigo-500 text-indigo-400' : 'border-transparent text-slate-500 hover:text-slate-300'}`}>
                                 <Zap size={16}/> Mana
                             </button>
+                            {/* Funcionalidades Ocultas (Feature Toggle via Comentário)
                             <button onClick={() => setActiveSubTab('rss')} className={`pb-3 text-sm font-bold flex items-center gap-2 transition-colors border-b-2 whitespace-nowrap snap-start shrink-0 ${activeSubTab === 'rss' ? 'border-indigo-500 text-indigo-400' : 'border-transparent text-slate-500 hover:text-slate-300'}`}>
                                 <Calculator size={16}/> RSS Generator
                             </button>
                             <button onClick={() => setActiveSubTab('commands')} className={`pb-3 pr-4 sm:pr-0 text-sm font-bold flex items-center gap-2 transition-colors border-b-2 whitespace-nowrap snap-start shrink-0 ${activeSubTab === 'commands' ? 'border-indigo-500 text-indigo-400' : 'border-transparent text-slate-500 hover:text-slate-300'}`}>
                                 <ListIcon size={16}/> Bot Commands
                             </button>
+                            */}
                         </div>
                     </div>
 
-                    {/* Renderização Condicional Limpa */}
                     {activeSubTab === 'titles' && <BaseTitlesView />}
                     {activeSubTab === 'gftasks' && <GfTasksView />}
                     {activeSubTab === 'mana' && <ManaAppContainer />}
-                    {activeSubTab === 'rss' && <RssGeneratorView />}
+                    {/* {activeSubTab === 'rss' && <RssGeneratorView />}
                     {activeSubTab === 'commands' && <BotCommandsView />}
+                    */}
                 </div>
             );
         };
